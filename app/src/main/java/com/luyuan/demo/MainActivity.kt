@@ -28,9 +28,14 @@ class MainActivity : Activity() {
     private enum class Size(val wDp: Int, val title: String) { BALL(56, "小球"), BAR(200, "工具条"), PANEL(320, "面板") }
 
     private var wm: WindowManager? = null
-    private var host: FrameLayout? = null
-    private var curSize: Size? = null
     private var stress = 0
+
+    companion object {
+        // 进程级持有窗引用：Activity 被系统重建后字段归零会让旧窗变孤儿、越叠越多
+        // （demo 实证：平板 dumpsys 见 6 个泄漏窗）——引用存活于进程才守得住"单窗常驻"
+        private var host: FrameLayout? = null
+        private var curSize: Size? = null
+    }
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
 
@@ -119,6 +124,13 @@ class MainActivity : Activity() {
                 }
                 val mounted = host
                 if (mounted == null) {
+                    val h = FrameLayout(this)
+                    h.addView(wraped, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT))
+                    manager.addView(h, lp)
+                    host = h
+                } else if (mounted.windowToken == null) {
+                    // 防失同步：引用还在但窗已不在（异常路径）→ 摘引用重新挂
+                    host = null
                     val h = FrameLayout(this)
                     h.addView(wraped, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT))
                     manager.addView(h, lp)
