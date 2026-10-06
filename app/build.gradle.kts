@@ -1,0 +1,17 @@
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+}
+
+android {
+    namespace = "com.luyuan.demo"
+    compileSdk = 34
+
+    defaultConfig {
+        applicationId = "com.luyuan.demo"
+        minSdk = 24
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
+    }
+}
